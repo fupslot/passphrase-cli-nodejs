@@ -1,0 +1,75 @@
+#!/usr/bin/env node
+
+const crypto = require('crypto')
+const fs = require('fs')
+const readline = require('readline')
+const yargs = require('yargs')
+const { hideBin } = require('yargs/helpers')
+
+const argv = yargs(hideBin(process.argv)).argv
+
+let pairs = argv.pairs || argv.p || 1
+let d = argv.delimiter || argv.d || ' '
+const acceptDelimiters = ' -_'
+
+const usageHelp = `
+Usage passphrase [options]
+
+Options:
+    --pair -p - number of pairs (1..256). Default: 1
+    --delimiter -d str - word delimiter (" ", "-", "_"). Default " " (space)
+
+Example:
+    passphrase -p 2 -d "-"
+`
+
+if (pairs < 1 || pairs > 256) {
+  console.log(`Error: ${pairs} is out of range`)
+  console.log(usageHelp)
+  process.exit(1)
+}
+
+if (d.length > 1 || acceptDelimiters.indexOf(d) < 0) {
+  console.log(`Error: Delimiter [${d}] unsupported`)
+  console.log(usageHelp)
+  process.exit(1)
+}
+
+
+async function readFile(path) {
+  return new Promise((accept) => {
+    const rl = readline.createInterface(fs.createReadStream(path))
+    const data = []
+    rl.on('line', (input) => data.push(input))
+    
+    rl.on('close', () => accept(data))
+  })
+}
+
+async function main() {
+  const nouns = await readFile('./data/nouns.txt')
+  const adjectives = await readFile('./data/adjectives.txt')
+
+  const randomWord = (wset) => {
+    const n = crypto.randomBytes(4).readUInt32BE(0) % wset.length
+    return wset[n]
+  }
+
+  const passphrase = (pairs, d) => {
+    let result = []
+    
+    while (pairs > 0) {
+      result.push(randomWord(adjectives))
+      result.push(randomWord(nouns))
+        
+      pairs--
+    }
+    
+    return result.join(d)
+  }
+
+  process.stdout.write(passphrase(pairs, d))
+  process.stdout.write('\n')
+}
+
+main().catch(console.error)
