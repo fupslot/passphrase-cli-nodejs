@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 
+const path = require('path')
 const crypto = require('crypto')
 const fs = require('fs')
 const readline = require('readline')
@@ -47,8 +48,9 @@ async function readFile(path) {
 }
 
 async function main() {
-  const nouns = await readFile('./data/nouns.txt')
-  const adjectives = await readFile('./data/adjectives.txt')
+  const dataDir = path.resolve(__dirname, '../data')
+  const nouns = await readFile(`${dataDir}/nouns.txt`)
+  const adjectives = await readFile(`${dataDir}/adjectives.txt`)
 
   const randomWord = (wset) => {
     const n = crypto.randomBytes(4).readUInt32BE(0) % wset.length
