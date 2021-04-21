@@ -11,6 +11,7 @@ const argv = yargs(hideBin(process.argv)).argv
 
 let pairs = argv.pairs || argv.p || 1
 let d = argv.delimiter || argv.d || ' '
+let v = argv.verbose || argv.v || false
 const acceptDelimiters = ' -_'
 
 const usageHelp = `
@@ -19,7 +20,7 @@ Usage passphrase [options]
 Options:
     --pair -p - number of pairs (1..256). Default: 1
     --delimiter -d str - word delimiter (" ", "-", "_"). Default " " (space)
-
+    --verbose -v - prints execution time. Default set to "false"
 Example:
     passphrase -p 2 -d "-"
 `
@@ -48,6 +49,8 @@ async function readFile(path) {
 }
 
 async function main() {
+  const start = process.hrtime()
+
   const dataDir = path.resolve(__dirname, '../data')
   const nouns = await readFile(`${dataDir}/nouns.txt`)
   const adjectives = await readFile(`${dataDir}/adjectives.txt`)
@@ -72,6 +75,11 @@ async function main() {
 
   process.stdout.write(passphrase(pairs, d))
   process.stdout.write('\n')
+
+  const diff = process.hrtime(start)
+  if (v) {
+    console.log(`${Math.floor((diff[0] / 1e9 + diff[1]) / 1e6)}ms`)
+  }
 }
 
 main().catch(console.error)
